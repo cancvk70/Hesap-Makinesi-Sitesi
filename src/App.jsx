@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Calculator, History, Moon, Sun, Trash2, X } from 'lucide-react';
 
 export default function App() {
@@ -7,31 +7,73 @@ export default function App() {
   const [history, setHistory] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
   const [theme, setTheme] = useState('dark');
+  const audioContextRef = useRef(null);
+  const lastSoundTimeRef = useRef(0);
 
-  // Dokunma sesi için ses oluştur
-  const playClickSound = () => {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    oscillator.frequency.value = 800;
-    oscillator.type = 'sine';
-    
-    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
-    
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 0.1);
+  // Ses için AudioContext'i bir kere oluştur
+  const formatDisplay = (str) => {
+    if (!str) return '';
+    return formatNumber(str);
   };
 
-  // Sayıları formatla (binlik ayırıcı)
+  useEffect(() => {
+    audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+    return () => {
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+      }
+    };
+  }, []);
+
+  // Geliştirilmiş dokunma sesi
+  const playClickSound = () => {
+    const now = Date.now();
+    if (now - lastSoundTimeRef.current < 50) return;
+    lastSoundTimeRef.current = now;
+
+    try {
+      const audioContext = audioContextRef.current;
+      if (!audioContext || audioContext.state === 'closed') return;
+
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      const filter = audioContext.createBiquadFilter();
+      
+      oscillator.connect(filter);
+      filter.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(1200, audioContext.currentTime);
+      filter.Q.setValueAtTime(1, audioContext.currentTime);
+      
+      oscillator.frequency.setValueAtTime(520, audioContext.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(380, audioContext.currentTime + 0.04);
+      oscillator.type = 'sine';
+      
+      gainNode.gain.setValueAtTime(0.06, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.06);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.06);
+    } catch (error) {
+      console.error('Ses çalınamadı:', error);
+    }
+  };
+
   const formatNumber = (num) => {
     if (num === '' || num === null || num === undefined) return '';
     
     const str = num.toString();
+    
+    if (/[+\-×÷()^!]/.test(str)) {
+      return str.replace(/(\d+\.?\d*)/g, (match) => {
+        const parts = match.split('.');
+        const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        return parts.length > 1 ? `${integerPart}.${parts[1]}` : integerPart;
+      });
+    }
+    
     const parts = str.split('.');
     const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     
@@ -69,7 +111,6 @@ export default function App() {
 
   const evaluateExpression = (expr) => {
     try {
-      // Virgülleri kaldır (binlik ayırıcı)
       let processedExpr = expr
         .replace(/,/g, '')
         .replace(/\s+/g, '')
@@ -239,22 +280,22 @@ export default function App() {
             <div className={`rounded-2xl p-5 mb-4 shadow-inner ${
               isDark ? 'bg-gray-900/50' : 'bg-gray-50'
             }`}>
-              <div className={`w-full bg-transparent text-right text-3xl outline-none font-light ${
+              <div className={`w-full bg-transparent text-right text-3xl outline-none font-light break-all ${
                 isDark 
                   ? 'text-white placeholder-gray-600' 
                   : 'text-gray-900 placeholder-gray-400'
               }`}>
-                {formatNumber(input) || '0'}
+                {formatDisplay(input) || '0'}
               </div>
               {result && (
-                <div className={`text-right text-4xl font-bold mt-3 animate-fade-in ${
+                <div className={`text-right text-4xl font-bold mt-3 animate-fade-in break-all ${
                   result === 'Hata'
                     ? 'text-red-500'
                     : isDark 
                       ? 'text-blue-400' 
                       : 'text-blue-600'
                 }`}>
-                  = {formatNumber(result)}
+                  = {formatDisplay(result)}
                 </div>
               )}
             </div>
@@ -315,15 +356,15 @@ export default function App() {
                             : 'bg-white hover:bg-gray-100'
                         }`}
                       >
-                        <div className={`text-sm mb-1 ${
+                        <div className={`text-sm mb-1 break-all ${
                           isDark ? 'text-gray-400' : 'text-gray-600'
                         }`}>
-                          {formatNumber(item.expression)}
+                          {formatDisplay(item.expression)}
                         </div>
-                        <div className={`font-semibold text-lg ${
+                        <div className={`font-semibold text-lg break-all ${
                           isDark ? 'text-white' : 'text-gray-900'
                         }`}>
-                          = {formatNumber(item.result)}
+                          = {formatDisplay(item.result)}
                         </div>
                         <div className={`text-xs mt-1 ${
                           isDark ? 'text-gray-600' : 'text-gray-400'
@@ -402,4 +443,4 @@ export default function App() {
       </div>
     </div>
   );
-                 }
+                        }
