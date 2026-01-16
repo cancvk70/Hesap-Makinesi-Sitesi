@@ -9,39 +9,25 @@ export default function App() {
   const [theme, setTheme] = useState('dark');
 
   useEffect(() => {
-    loadData();
+    const savedTheme = localStorage.getItem('calculator_theme');
+    if (savedTheme) setTheme(savedTheme);
+
+    const savedHistory = localStorage.getItem('calculator_history');
+    if (savedHistory) {
+      try {
+        setHistory(JSON.parse(savedHistory));
+      } catch (error) {
+        setHistory([]);
+      }
+    }
   }, []);
 
-  const loadData = async () => {
-    try {
-      const themeResult = await window.storage.get('calculator_theme');
-      if (themeResult) setTheme(themeResult.value);
-    } catch (error) {
-      setTheme('dark');
-    }
-
-    try {
-      const historyResult = await window.storage.get('calculator_history');
-      if (historyResult) setHistory(JSON.parse(historyResult.value));
-    } catch (error) {
-      setHistory([]);
-    }
+  const saveHistory = (newHistory) => {
+    localStorage.setItem('calculator_history', JSON.stringify(newHistory));
   };
 
-  const saveHistory = async (newHistory) => {
-    try {
-      await window.storage.set('calculator_history', JSON.stringify(newHistory));
-    } catch (error) {
-      console.error('History save failed');
-    }
-  };
-
-  const saveTheme = async (newTheme) => {
-    try {
-      await window.storage.set('calculator_theme', newTheme);
-    } catch (error) {
-      console.error('Theme save failed');
-    }
+  const saveTheme = (newTheme) => {
+    localStorage.setItem('calculator_theme', newTheme);
   };
 
   const toggleTheme = () => {
@@ -126,13 +112,9 @@ export default function App() {
     setInput(prev => prev.slice(0, -1));
   };
 
-  const clearHistory = async () => {
+  const clearHistory = () => {
     setHistory([]);
-    try {
-      await window.storage.delete('calculator_history');
-    } catch (error) {
-      console.error('Clear history failed');
-    }
+    localStorage.removeItem('calculator_history');
   };
 
   const loadFromHistory = (item) => {
@@ -380,4 +362,4 @@ export default function App() {
       </div>
     </div>
   );
-                                     }
+        }
