@@ -157,12 +157,12 @@ export default function App() {
                   <h1 className={`text-xl font-bold ${
                     isDark ? 'text-white' : 'text-gray-900'
                   }`}>
-                    Calculator
+                    Hesap Makinesi
                   </h1>
                   <p className={`text-xs ${
                     isDark ? 'text-gray-400' : 'text-gray-500'
                   }`}>
-                    AI Powered
+                    Made By Can
                   </p>
                 </div>
               </div>
@@ -355,11 +355,11 @@ export default function App() {
             <div className={`text-center mt-4 text-xs ${
               isDark ? 'text-gray-600' : 'text-gray-400'
             }`}>
-              Made By Can 💙
+              Made By Can
             </div>
           </div>
         </div>
       </div>
     </div>
   );
-        }
+                                            }
