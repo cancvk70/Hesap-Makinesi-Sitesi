@@ -434,7 +434,7 @@ export default function App() {
             <div className={`text-center mt-4 text-xs ${
               isDark ? 'text-gray-600' : 'text-gray-400'
             }`}>
-              Made By Can
+              Made By Sp9ksy
             </div>
           </div>
         </div>
