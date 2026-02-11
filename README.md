@@ -22,4 +22,4 @@ Basit ama kullanışlı, modern bir hesap makinesi uygulaması. Günlük hesapla
 
 ---
 
-**Made By Can** 💙
+**Made By Sp9ksy** 💙
